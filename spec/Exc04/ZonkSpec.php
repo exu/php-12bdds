@@ -43,7 +43,7 @@ class ZonkSpec extends ObjectBehavior
         $this->shouldHaveType('Exc04\Zonk');
     }
 
-    function it_should_put_car_and_goates_into_gates()
+    function it_puts_car_and_goates_into_gates()
     {
         $this->initGates();
         $this->getGates()->shouldHaveCount(3);

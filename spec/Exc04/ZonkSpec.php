@@ -43,10 +43,10 @@ class ZonkSpec extends ObjectBehavior
         $this->shouldHaveType('Exc04\Zonk');
     }
 
-    function it_puts_car_and_goates_into_gates()
+    function it_puts_car_and_goates_into_doors()
     {
-        $this->initGates();
-        $this->getGates()->shouldHaveCount(3);
+        $this->reset();
+        $this->getDoors()->shouldHaveCount(3);
     }
 
 
@@ -58,7 +58,58 @@ class ZonkSpec extends ObjectBehavior
     }
 
 
+    function it_opens_doors()
+    {
+        $this->reset();
+        $this->open(1);
+        $this->getOpened()->shouldBe([1]);
+        $this->open(0);
+        $this->getOpened()->shouldBe([1,0]);
+    }
+
+    function it_records_gameplay()
+    {
+        $this->getRecords()->shouldHaveCount(0);
+        $this->reset();
+        $this->answer(0);
+        $this->answer(1);
+        $this->record()->shouldHaveCount(3);
+        $this->getRecords()->shouldHaveCount(1);
+    }
 
 
+    function it_allow_to_play_with_doors()
+    {
+        for ($i = 0; $i < 1000; $i++) {
+            $this->reset();
+            $door = rand(0, 2);
+            $this->answer($door);
 
+            // change choosen door?
+            $change = rand(0,1);
+            if ($change) {
+                do {
+                    $changedDoor = rand(0, 2);
+                } while($changedDoor == $door);
+
+                $this->answer($changedDoor);
+            }
+
+            $this->record();
+        }
+
+        $this->getRecords()->shouldHaveCount(1000);
+
+        $this->getGamesWithChange()->shouldBeBetween(0,1000);
+        $this->getGamesWithoutChange()->shouldBeBetween(0,1000);
+    }
+
+    public function getMatchers()
+    {
+        return [
+            'beBetween' => function($subject, $min, $max) {
+                return is_int($subject) && $subject >= $min && $subject <= $max;
+            }
+        ];
+    }
 }

@@ -4,100 +4,154 @@ namespace Exc02;
 
 class NumberNames
 {
-    protected $ones = [
-        0 => 'zero',
-        1 => 'one',
-        2 => 'two',
-        3 => 'three',
-        4 => 'four',
-        5 => 'five',
-        6 => 'six',
-        7 => 'seven',
-        8 => 'eight',
-        9 => 'nine',
+    protected $predefined = [
+        0 =>   'zero',
+        1 =>   'one',
+        2 =>   'two',
+        3 =>   'three',
+        4 =>   'four',
+        5 =>   'five',
+        6 =>   'six',
+        7 =>   'seven',
+        8 =>   'eight',
+        9 =>   'nine',
+        10 =>  'ten',
+        11 =>  'eleven',
+        12 =>  'twelve',
+        13 =>  'thirteen',
+        14 =>  'fourteen',
+        15 =>  'fifteen',
+        16 =>  'sixteen',
+        17 =>  'seventeen',
+        18 =>  'eighteen',
+        19 =>  'nineteen',
+        20 =>  'twenty',
+        30 =>  'thirty',
+        40 =>  'forty',
+        50 =>  'fifty',
+        60 =>  'sixty',
+        70 =>  'seventy',
+        80 =>  'eighty',
+        90 =>  'ninety',
+        100 => 'hundred',
     ];
 
-    protected $tens = [
-        0 => '',
-        1 => 'ten',
-        2 => 'twenty',
-        3 => 'thirty',
-        4 => 'forty',
-        5 => 'fifty',
-        6 => 'sixty',
-        7 => 'seventy',
-        8 => 'eighty',
-        9 => 'ninety',
+    protected $divisors = [
+        1000 =>          'thousand',
+        1000000 =>       'million',
+        1000000000 =>    'billion',
+        1000000000000 => 'billiard',
     ];
 
-    protected $teens = [
-        0 => 'ten',
-        1 => 'eleven',
-        2 => 'twelve',
-        3 => 'thirteen',
-        4 => 'fourteen',
-        5 => 'fivetenn',
-        6 => 'sixteen',
-        7 => 'seventeen',
-        8 => 'eightteen',
-        9 => 'nineteen',
-    ];
 
-    protected $multiples = [
-        0 => '',
-        3 => 'thousand',
-        6 => 'million',
-        9 => 'billion',
-    ];
-
-    public function spell($number)
+    protected function findDivisor($number)
     {
-        $number = strrev((float) $number);
+        $divisor = 1;
+        for (;;) {
+            $divisor *= 1000;
+            if ($divisor > $number) {
+                return (int) ($divisor / 1000);
+            }
+        }
+    }
 
-        $words = $multiplier = '';
-        $nums = str_split($number);
+    protected function divideNumber($number)
+    {
+        $result = [];
+        $divisor = $this->findDivisor($number);
 
-        for ($i = count($nums)-1; $i >= 0; $i--) {
-
-            $n = $nums[$i];
-            $nm1 = isset($nums[$i-1]) ? $nums[$i-1] : 0;
-            $nm2 = isset($nums[$i-2]) ? $nums[$i-2] : 0;
-            $np1 = isset($nums[$i+1]) ? $nums[$i+1] : 0;
-
-            $multiplier = isset($this->multiples[$i]) ? $this->multiples[$i] : $multiplier;
-
-            switch ($i % 3) {
-                case 0:
-                    if ($np1 == 1 || ($n == 0 && count($nums) > 1) ) {
-                        $word = '';
-                        break;
-                    }
-                    $word = $this->ones[$n];
-                    break;
-                case 1:
-                    if ($n == 1) {
-                        $word = $this->teens[$nm1];
-                    } else {
-                        $word = $this->tens[$n];
-                    }
-                    break;
-                case 2:
-                    $word = $this->ones[$n] . ' hundred';
-                    if ($nm1 || $nm2) {
-                        $word .= ' and'; // f*** british
-                    }
-                    break;
+        for (;;) {
+            if ($divisor === 0) {
+                return $result;
             }
 
-            if ($word) {
-                $words[] = $word;
-            }
+            $value = (int) ($number / $divisor);
+            $result[] = ['divisor' => $divisor, 'value' => $value];
 
-            if (isset($this->multiples[$i]) && $i > 1) {
-                $words[] =  $this->multiples[$i] . ',';
+            $number = $number - ($divisor * $value);
+            $divisor = (int) ($divisor / 1000);
+        }
+
+        return $result;
+    }
+
+    protected function spellHundrets($number)
+    {
+        $hundreds = (int) ($number / 100);
+        $tens = $number % 100;
+        $spelled = '';
+
+        if ($number === 0) {
+            return '';
+        }
+
+        if ($hundreds > 0) {
+            $spelled .= $this->predefined[$hundreds] .  ' hundred';
+        }
+
+        if ($hundreds > 0 && $tens > 0) {
+            $spelled .= ' and ';
+        }
+
+        if ($tens > 0) {
+            $spelled .= $this->spellTens($tens);
+        }
+
+        return $spelled ;
+    }
+
+    function spellTens($number)
+    {
+        if (isset($this->predefined[$number])) {
+            return $this->predefined[$number];
+        }
+
+        $spelled = '';
+        $ten = 10 * (int)($number / 10);
+        $one = $number % 10;
+
+        if ($ten > 0) {
+            $spelled .= $this->predefined[$ten];
+            if ($one > 0) {
+                $spelled .= ' ';
             }
         }
 
-        return implode(' ', $words);
+        if ($one > 0) {
+            $spelled .= $this->predefined[$one];
+        }
+
+        return $spelled;
+    }
+
+    public function spell($number)
+    {
+        if (isset($this->predefined[$number])) {
+            return $this->predefined[$number];
+        }
+
+        if ($number < 100) {
+            return $this->spellTens($number);
+        }
+
+        $divided = $this->divideNumber($number);
+        $spelled = [];
+
+        for ($i = 0; $i < count($divided); $i++) {
+            $divisor = $divided[$i]['divisor'];
+            $num = $divided[$i]['value'];
+
+            $div = $divisor > 1 ? ' ' . $this->divisors[$divisor] : '';
+
+            if (isset($this->predefined[$num])) {
+                $sub = $this->predefined[$num];
+            } else {
+                $sub = $this->spellHundrets($num);
+            }
+
+            $spelled[] = $sub . $div;
+        }
+
+        return implode(', ', $spelled);
     }
 }
